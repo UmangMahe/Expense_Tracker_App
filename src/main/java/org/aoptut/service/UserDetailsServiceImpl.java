@@ -2,6 +2,7 @@ package org.aoptut.service;
 
 import lombok.AllArgsConstructor;
 import org.aoptut.entities.UserInfo;
+import org.aoptut.eventProducer.UserInfoProducer;
 import org.aoptut.model.UserInfoDto;
 import org.aoptut.repository.UserRepository;
 import org.aoptut.utils.UserValidation;
@@ -21,10 +22,13 @@ import java.util.UUID;
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Autowired
-    UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private final UserInfoProducer userInfoProducer;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -46,6 +50,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
         String userId = UUID.randomUUID().toString();
         userRepository.save(new UserInfo(userId, userInfoDto.getUsername(), userInfoDto.getPassword(), new HashSet<>()));
+        userInfoProducer.sendEventToKafka(userInfoDto);
         return true;
     }
 }
